@@ -8,4 +8,6 @@ require_once 'CurrencyChecker/CurrencyChecker.php';
 
 $currencyChecker = new CurrencyChecker();
 
-$currencyChecker->getTodayCurrency();
+var_dump($currencyChecker->getTodayCurrencies());
+
+var_dump($currencyChecker->getCurrencies(strtotime('20-01-2019')));

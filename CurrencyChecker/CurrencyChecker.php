@@ -45,9 +45,19 @@ class CurrencyChecker
         ];
     }
 
-    function getTodayCurrency()
+    function getTodayCurrencies()
     {
-        var_dump($this->calculateAverageCurrency(self::USD, time()));
-        var_dump($this->getCurrencyFromCbr(self::EUR, time()));
+        return array_merge(
+            $this->calculateAverageCurrency(self::USD, time()),
+            $this->getCurrencyFromCbr(self::EUR, time())
+        );
+    }
+
+    function getCurrencies($timestamp)
+    {
+        return array_merge(
+            $this->calculateAverageCurrency(self::USD, $timestamp),
+            $this->getCurrencyFromCbr(self::EUR, $timestamp)
+        );
     }
 }
