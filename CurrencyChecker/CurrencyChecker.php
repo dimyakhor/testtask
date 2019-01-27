@@ -4,7 +4,7 @@ class CurrencyChecker
 {
 
     const CBR_URL = 'http://www.cbr.ru/scripts/XML_daily.asp';
-    const RBC_URL = 'https://cash.rbc.ru/cash/json/converter_currency_rate/'; //?currency_from=USD&currency_to=RUR&source=cbrf&sum=1&date=2019-01-27';
+    const RBC_URL = 'https://cash.rbc.ru/cash/json/converter_currency_rate/';
 
     const USD = 'USD';
     const EUR = 'EUR';
@@ -38,14 +38,16 @@ class CurrencyChecker
         ];
     }
 
+    private function calculateAverageCurrency($currencyType, $timestamp) {
+        return [
+            $currencyType => ($this->getCurrencyFromCbr($currencyType, $timestamp)[$currencyType] +
+                              $this->getCurrencyFromRbc($currencyType, $timestamp)[$currencyType])/2
+        ];
+    }
 
     function getTodayCurrency()
     {
-        var_dump($this->getCurrencyFromRbc(self::USD, time()));
-        var_dump($this->getCurrencyFromCbr(self::USD, time()));
-        var_dump($this->getCurrencyFromRbc(self::EUR, time()));
+        var_dump($this->calculateAverageCurrency(self::USD, time()));
         var_dump($this->getCurrencyFromCbr(self::EUR, time()));
-
-       // return ;
     }
 }
