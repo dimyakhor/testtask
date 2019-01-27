@@ -16,14 +16,19 @@ class CurrencyChecker
 
     private function getCurrencyFromCbr($currencyType, $timestamp)
     {
-        $url = self::CBR_URL . '?date_req=' . date('d/m/Y', $timestamp);
-        $xmlDataValues = simplexml_load_file($url);
-        foreach ($xmlDataValues->Valute as $valute) {
-            if ((int)$valute->NumCode === self::CBR_NUM_CODES[$currencyType]){
-                return [$currencyType => (float)str_replace(',','.',$valute->Value)];
+        try{
+            $url = self::CBR_URL . '?date_req=' . date('d/m/Y', $timestamp);
+            $xmlDataValues = simplexml_load_file($url);
+            foreach ($xmlDataValues->Valute as $valute) {
+                if ((int)$valute->NumCode === self::CBR_NUM_CODES[$currencyType]){
+                    return [$currencyType => (float)str_replace(',','.',$valute->Value)];
+                }
             }
+            return [$currencyType => 0];
+        } catch (Exception $e) {
+            echo 'Сервис получения курса валют из Центрального банка не доступен';
+            exit();
         }
-        return null;
     }
 
     private function generateRbcUrl($currencyType, $date) {
@@ -32,17 +37,27 @@ class CurrencyChecker
 
     private function getCurrencyFromRbc($currencyType, $timestamp)
     {
-        $date = date('Y-m-d',$timestamp);
-        return [
-            $currencyType => json_decode(file_get_contents($this->generateRbcUrl($currencyType, $date)))->data->sum_result
-        ];
+        try{
+            $date = date('Y-m-d',$timestamp);
+            $dataToParse = json_decode(file_get_contents($this->generateRbcUrl($currencyType, $date)));
+            if (!$dataToParse->data) {
+                return [$currencyType => 0];
+            }
+            $currencyVal = $dataToParse->data->sum_result;
+            return [$currencyType => $currencyVal];
+        } catch (Exception $e) {
+            echo 'Сервис получения курса валют из RBC не доступен';
+            exit();
+        }
     }
 
     private function calculateAverageCurrency($currencyType, $timestamp) {
-        return [
-            $currencyType => ($this->getCurrencyFromCbr($currencyType, $timestamp)[$currencyType] +
-                              $this->getCurrencyFromRbc($currencyType, $timestamp)[$currencyType])/2
-        ];
+        $averageVal = ($this->getCurrencyFromCbr($currencyType, $timestamp)[$currencyType] +
+            $this->getCurrencyFromRbc($currencyType, $timestamp)[$currencyType])/2;
+        if (!$averageVal) {
+            return null;
+        }
+        return [$currencyType => $averageVal];
     }
 
     function getTodayCurrencies()
@@ -55,9 +70,16 @@ class CurrencyChecker
 
     function getCurrencies($timestamp)
     {
-        return array_merge(
-            $this->calculateAverageCurrency(self::USD, $timestamp),
-            $this->getCurrencyFromCbr(self::EUR, $timestamp)
-        );
+        if (!is_int($timestamp) || $timestamp>time()) {
+            return null;
+        }
+
+        $usdVal = $this->calculateAverageCurrency(self::USD, $timestamp);
+        $eurVal = $this->getCurrencyFromCbr(self::EUR, $timestamp);
+
+        if (!$usdVal || !$eurVal) {
+            return null;
+        }
+        return array_merge($usdVal,$eurVal);
     }
 }
