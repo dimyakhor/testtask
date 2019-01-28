@@ -26,8 +26,7 @@ class CurrencyChecker
             }
             return [$currencyType => 0];
         } catch (Exception $e) {
-            echo 'Сервис получения курса валют из Центрального банка не доступен';
-            exit();
+            throw new Exception('Сервис получения курса валют из Центрального банка не доступен');
         }
     }
 
@@ -46,8 +45,7 @@ class CurrencyChecker
             $currencyVal = $dataToParse->data->sum_result;
             return [$currencyType => $currencyVal];
         } catch (Exception $e) {
-            echo 'Сервис получения курса валют из RBC не доступен';
-            exit();
+            throw new Exception('Сервис получения курса валют из RBC не доступен');
         }
     }
 
